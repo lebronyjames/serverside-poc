@@ -1,0 +1,72 @@
+[gd_scene format=3 uid="uid://bqawlwctodveh"]
+
+[ext_resource type="Script" uid="uid://166qbbf0dfme" path="res://Scripts/UI/MainMenu.gd" id="1_tt5f1"]
+
+[node name="MainMenu" type="Control" unique_id=1015657038 node_paths=PackedStringArray("username", "session_id", "join_game", "start_host", "quit_game")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_tt5f1")
+username = NodePath("PanelContainer/MarginContainer/VBoxContainer/Username")
+session_id = NodePath("PanelContainer/MarginContainer/VBoxContainer/SessionID")
+join_game = NodePath("PanelContainer/MarginContainer/VBoxContainer/JoinGame")
+start_host = NodePath("PanelContainer/MarginContainer/VBoxContainer/StartServer")
+quit_game = NodePath("PanelContainer/MarginContainer/VBoxContainer/Button")
+
+[node name="PanelContainer" type="PanelContainer" parent="." unique_id=2034279402]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer" unique_id=2133092494]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/MarginContainer" unique_id=957342735]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=161393307]
+layout_mode = 2
+text = "LETS GOOOOO THE GAME"
+
+[node name="Username" type="LineEdit" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=907219227]
+layout_mode = 2
+placeholder_text = "Username"
+
+[node name="SessionID" type="LineEdit" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=889995199]
+layout_mode = 2
+placeholder_text = "Session ID"
+
+[node name="JoinGame" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=2105725533]
+layout_mode = 2
+text = "Join Game"
+
+[node name="HSeparator" type="HSeparator" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1766958647]
+layout_mode = 2
+
+[node name="StartServer" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1483581208]
+layout_mode = 2
+text = "Start Server"
+
+[node name="HSeparator2" type="HSeparator" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=862091600]
+layout_mode = 2
+
+[node name="Button" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1783100342]
+layout_mode = 2
+text = "Quit Game
+"
