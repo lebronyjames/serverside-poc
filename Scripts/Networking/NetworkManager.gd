@@ -39,7 +39,7 @@ func client_callback():
 	var map_path = server_metadata["map_path"]
 	var current_tick = server_metadata["current_tick"] 
 	load_map(map_path)
-	ClientLoop.start(current_tick + rtt_ticks * 2)
+	ClientLoop.start(multiplayer.get_unique_id(), current_tick + rtt_ticks * 2)
 
 # ------------------------------ Helpers -------------------------------------------
 

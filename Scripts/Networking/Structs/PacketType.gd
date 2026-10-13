@@ -1,0 +1,2 @@
+class_name PacketType
+enum PacketType { INPUT_BATCH, SERVER_SNAPSHOT, SPAWN_ENTITY, DESPAWN_ENTTIY }
