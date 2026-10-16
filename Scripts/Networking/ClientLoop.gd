@@ -24,6 +24,7 @@ func start(_peer_id: int, _current_tick: int = 0) -> void:
 	started = true
 	lockstep_timing = 1.0 / Engine.physics_ticks_per_second
 	multiplayer.peer_packet.connect(on_server_to_client_packet)
+	send_client_init()
 
 # --------------------------------- Client loop --------------------------------------------
 
@@ -90,9 +91,14 @@ func process_events_locally(delta):
 		
 func process_physics_locally(delta):
 	for entityid in owned_entities:
-		entityid_to_controllable_map[peer_id].process_physics(delta)
+		entityid_to_controllable_map[entityid].process_physics(delta)
 
 # --------------------------- callbacks ----------------------------------------
+
+func send_client_init():
+	var packet := StreamPeerBuffer.new()
+	packet.put_u8(PacketType.PacketType.CLIENT_INIT)
+	send_reliable_packet_to_server(packet)
 
 func on_server_to_client_packet(sender_id: int, packet: PackedByteArray) -> void: # helper wired in to receive packet
 	print("Received packet from server")
@@ -139,16 +145,17 @@ func accept_entity_spawn_requests(buf: StreamPeerBuffer) -> void:
 	if entityid_to_controllable_map.has(request.entity_id):
 		return
 
-	var new_entity = spawnable_prefabs[request.target_prefab_id].instantiate()
+	var new_entity = PrefabIdMap.instantiate(request.target_prefab_id)
 	if new_entity == null:
 		push_error("Failed to instantiate prefab %d for entity %d." % [request.target_prefab_id, request.entity_id])
 		return
+	get_tree().root.add_child(new_entity)
 	new_entity.name = str(request.entity_id)
 	new_entity.entity_id = request.entity_id
-	new_entity.owner_peerid = request.owner_peer_id
+	new_entity.owner_peerid = request.owner_peerid
 	new_entity.apply_entitystate(request.entity_state)
-	add_child(new_entity, true)
 	entityid_to_controllable_map[request.entity_id] = new_entity
+	owned_entities.append(request.entity_id)
 
 func accept_enemy_despawn_requests(buf: StreamPeerBuffer) -> void:
 	if buf.get_available_bytes() < 1:
@@ -176,7 +183,7 @@ func accept_enemy_despawn_requests(buf: StreamPeerBuffer) -> void:
 		owned_entities.erase(entity_id)
 		if is_instance_valid(entity):
 			entity.queue_free()
-			
+
 # ------------------------------ Network helpers -----------------------------------------------
 
 func send_unreliable_packet_to_server(buffer: StreamPeerBuffer):
@@ -186,3 +193,4 @@ func send_unreliable_packet_to_server(buffer: StreamPeerBuffer):
 func send_reliable_packet_to_server(buffer: StreamPeerBuffer):
 	var sm := multiplayer as SceneMultiplayer
 	sm.send_bytes(buffer.data_array, 1, MultiplayerPeer.TRANSFER_MODE_RELIABLE, 1)  # to client peers, channel 1
+	

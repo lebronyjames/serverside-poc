@@ -23,7 +23,6 @@ func start() -> void:
 	entity_spawn_requests = []
 	entity_despawn_requests = []
 	multiplayer.peer_packet.connect(on_client_to_server_packet)
-	multiplayer.peer_connected.connect(on_client_connect)
 
 # --------------------------------- Server loop --------------------------------------------
 
@@ -71,14 +70,14 @@ func on_client_to_server_packet(sender_id: int, packet: PackedByteArray) -> void
 	var buf := StreamPeerBuffer.new()
 	buf.data_array = packet
 	var packet_type: PacketType.PacketType = buf.get_u8()
-	if packet_type != PacketType.PacketType.INPUT_BATCH:
-		return
-	
-	var decoded_input_packet := InputLog.decode_tick(buf.data_array.slice(1))
-	decoded_input_packet["peer_id"] = sender_id
-	var packet_tick = decoded_input_packet.tick
-	for input in decoded_input_packet.inputs:
-		input_log.add_input_to_tick(packet_tick, input)
+	if packet_type == PacketType.PacketType.INPUT_BATCH:
+		var decoded_input_packet := InputLog.decode_tick(buf.data_array.slice(1))
+		decoded_input_packet["peer_id"] = sender_id
+		var packet_tick = decoded_input_packet.tick
+		for input in decoded_input_packet.inputs:
+			input_log.add_input_to_tick(packet_tick, input)
+	elif packet_type == PacketType.PacketType.CLIENT_INIT:
+		on_client_connect(sender_id)
 	
 func on_client_connect(sender_id: int):
 	clientids.append(sender_id)
