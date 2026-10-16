@@ -95,6 +95,7 @@ func process_physics_locally(delta):
 # --------------------------- callbacks ----------------------------------------
 
 func on_server_to_client_packet(sender_id: int, packet: PackedByteArray) -> void: # helper wired in to receive packet
+	print("Received packet from server")
 	if sender_id != 1:
 		return
 	
@@ -127,7 +128,6 @@ func accept_entity_spawn_requests(buf: StreamPeerBuffer) -> void:
 		push_error("Spawn entity packet is missing its request count.")
 		return
 
-	var request_count := buf.get_u8()
 	var request := EntitySpawnRequest.deserialize_from_buffer(buf)
 	if request == null:
 		return

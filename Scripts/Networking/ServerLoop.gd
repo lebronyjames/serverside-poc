@@ -58,7 +58,8 @@ func serialize_and_export_entity_states():
 	var serialized_entity_state_pba = entity_state_list.serialize()
 	server_state_buffer_packet.put_data(serialized_entity_state_pba)
 	for client_peerid in clientids:
-		send_reliable_packet_to_client(client_peerid, server_state_buffer_packet)
+		#send_reliable_packet_to_client(client_peerid, server_state_buffer_packet)
+		pass
 	
 # -------------------------- Callbacks -----------------------------------------------------------
 	
@@ -86,6 +87,7 @@ func on_client_connect(sender_id: int):
 		var owner_peerid = entityid_to_controllable_map[entityid].owner_peerid
 		var entity_state = entityid_to_controllable_map[entityid].pack_to_entitystate()
 		var entity_spawn_request = EntitySpawnRequest.new(entityid, archetype, owner_peerid, entity_state)
+		send_spawn_entity_request(sender_id, entity_spawn_request)
 	
 	var spawn_state = EntityStateConstructors.player_state(sender_id, Vector3(0, 3, 0), Vector3(0, 0, 0), Vector3(0, 0, 0), Vector3(0, 0, 0))
 	spawn_entity(sender_id, sender_id, Archetype.PLAYER, spawn_state)
@@ -100,28 +102,24 @@ func spawn_entity(entity_id: int, owner_peerid: int, archetype: Archetype, start
 	var entity_state = entity.pack_to_entitystate()
 	var entity_spawn_request = EntitySpawnRequest.new(entity_id, Archetype.PLAYER, owner_peerid, entity_state)
 	entityid_to_controllable_map[entity_id] = entity
-	send_spawn_entity_request(entity_spawn_request)
+	for client_peerid in clientids:
+		send_spawn_entity_request(client_peerid, entity_spawn_request)
 
-func send_spawn_entity_request(request: EntitySpawnRequest):
+func send_spawn_entity_request(client_peerid: int, request: EntitySpawnRequest):
 	var serialized_bytes = request.serialize()
 	
 	var spawn_buffer := StreamPeerBuffer.new()
 	spawn_buffer.put_u8(PacketType.PacketType.SPAWN_ENTITY)
 	spawn_buffer.put_data(serialized_bytes)
+	send_reliable_packet_to_client(client_peerid, spawn_buffer)
 	
-	for client_peerid in clientids:
-		print("Going to send spawn request to " + str(client_peerid))
-		send_reliable_packet_to_client(client_peerid, spawn_buffer)
-	
-func send_despawn_entity_requests(request: EntityDespawnRequest):
+func send_despawn_entity_requests(client_peerid: int, request: EntityDespawnRequest):
 	var serialized_bytes = request.serialize()
 	
 	var despawn_buffer := StreamPeerBuffer.new()
 	despawn_buffer.put_u8(PacketType.PacketType.DESPAWN_ENTTIY)
 	despawn_buffer.put_data(serialized_bytes)
-	
-	for client_peerid in clientids:
-		send_reliable_packet_to_client(client_peerid, despawn_buffer)
+	send_reliable_packet_to_client(client_peerid, despawn_buffer)
 
 func send_unreliable_packet_to_client(client_peerid: int, buffer: StreamPeerBuffer):
 	var sm := multiplayer as SceneMultiplayer
