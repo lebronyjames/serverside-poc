@@ -149,11 +149,12 @@ func accept_entity_spawn_requests(buf: StreamPeerBuffer) -> void:
 	if new_entity == null:
 		push_error("Failed to instantiate prefab %d for entity %d." % [request.target_prefab_id, request.entity_id])
 		return
-	get_tree().root.add_child(new_entity)
 	new_entity.name = str(request.entity_id)
 	new_entity.entity_id = request.entity_id
 	new_entity.owner_peerid = request.owner_peerid
+	get_tree().root.add_child(new_entity)
 	new_entity.apply_entitystate(request.entity_state)
+	
 	entityid_to_controllable_map[request.entity_id] = new_entity
 	owned_entities.append(request.entity_id)
 
