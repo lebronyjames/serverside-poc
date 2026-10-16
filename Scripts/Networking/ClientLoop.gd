@@ -101,7 +101,6 @@ func send_client_init():
 	send_reliable_packet_to_server(packet)
 
 func on_server_to_client_packet(sender_id: int, packet: PackedByteArray) -> void: # helper wired in to receive packet
-	print("Received packet from server")
 	if sender_id != 1:
 		return
 	
@@ -116,7 +115,6 @@ func on_server_to_client_packet(sender_id: int, packet: PackedByteArray) -> void
 		PacketType.PacketType.SERVER_SNAPSHOT:
 			accept_server_snapshot(buf)
 		PacketType.PacketType.SPAWN_ENTITY:
-			print("A packed matched spawn entity")
 			accept_entity_spawn_requests(buf)
 		PacketType.PacketType.DESPAWN_ENTTIY:
 			accept_enemy_despawn_requests(buf)
@@ -129,7 +127,6 @@ func accept_server_snapshot(buf: StreamPeerBuffer) -> void:
 		entity_states = entity_state_list
 
 func accept_entity_spawn_requests(buf: StreamPeerBuffer) -> void:
-	print("As client, received spawn packet")
 	if buf.get_available_bytes() < 1:
 		push_error("Spawn entity packet is missing its request count.")
 		return
@@ -154,6 +151,7 @@ func accept_entity_spawn_requests(buf: StreamPeerBuffer) -> void:
 	new_entity.owner_peerid = request.owner_peerid
 	get_tree().root.add_child(new_entity)
 	new_entity.apply_entitystate(request.entity_state)
+	new_entity.start_object()
 	
 	entityid_to_controllable_map[request.entity_id] = new_entity
 	owned_entities.append(request.entity_id)

@@ -23,6 +23,9 @@ var latest_velocity: Vector3
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	pass
+	
+func start_object():
 	if multiplayer.get_unique_id() == owner_peerid:
 		camera.current = true
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
