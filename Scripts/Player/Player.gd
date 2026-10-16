@@ -3,6 +3,7 @@ extends CharacterBody3D
 signal client_request_movement
 
 const InputName = TimestampedInput.InputName
+const ARCHETYPE = PrefabIdMap.Archetype.PLAYER
 
 enum Mode { Server, Client, RemoteClient }
 
@@ -76,4 +77,3 @@ func apply_entitystate(entity_state: EntityState):
 	head.global_rotation = entity_state.vec3_values[2]
 	velocity = entity_state.vec3_values[3]
 	move_and_slide()
-	

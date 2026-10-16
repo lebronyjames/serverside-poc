@@ -31,10 +31,8 @@ func start(_peer_id: int, _current_tick: int = 0) -> void:
 func _physics_process(delta: float) -> void:
 	if started == false:
 		return
-	
-	handle_entity_spawn_requests()
-	handle_entity_despawn_requests()
-	apply_server_state()	
+
+	apply_server_state()
 	push_events_to_server()
 	process_events_locally(delta)
 	process_physics_locally(delta)
@@ -96,7 +94,7 @@ func process_physics_locally(delta):
 
 # --------------------------- callbacks ----------------------------------------
 
-func on_server_to_client_packet(sender_id: int, packet: PackedByteArray) -> void: # helper wired in to receive packets
+func on_server_to_client_packet(sender_id: int, packet: PackedByteArray) -> void: # helper wired in to receive packet
 	if sender_id != 1:
 		return
 	
@@ -111,6 +109,7 @@ func on_server_to_client_packet(sender_id: int, packet: PackedByteArray) -> void
 		PacketType.PacketType.SERVER_SNAPSHOT:
 			accept_server_snapshot(buf)
 		PacketType.PacketType.SPAWN_ENTITY:
+			print("A packed matched spawn entity")
 			accept_entity_spawn_requests(buf)
 		PacketType.PacketType.DESPAWN_ENTTIY:
 			accept_enemy_despawn_requests(buf)
@@ -123,43 +122,33 @@ func accept_server_snapshot(buf: StreamPeerBuffer) -> void:
 		entity_states = entity_state_list
 
 func accept_entity_spawn_requests(buf: StreamPeerBuffer) -> void:
+	print("As client, received spawn packet")
 	if buf.get_available_bytes() < 1:
 		push_error("Spawn entity packet is missing its request count.")
 		return
 
 	var request_count := buf.get_u8()
-	var requests: Array[EntitySpawnRequest] = []
-	for _i in range(request_count):
-		var request := EntitySpawnRequest.deserialize_from_buffer(buf)
-		if request == null:
-			return
-		requests.append(request)
+	var request := EntitySpawnRequest.deserialize_from_buffer(buf)
+	if request == null:
+		return
+
 	if buf.get_available_bytes() != 0:
 		push_error("Spawn entity packet contains unexpected trailing data.")
 		return
 
-	for request in requests:
-		if request.entity_id != request.entity_state.entity_id:
-			push_error("Spawn entity request ID does not match its entity state.")
-			return
-		if not spawnable_prefabs.has(request.target_prefab_id):
-			push_error("Spawn entity request references unknown prefab %d." % request.target_prefab_id)
-			return
+	if entityid_to_controllable_map.has(request.entity_id):
+		return
 
-	for request in requests:
-		if entityid_to_controllable_map.has(request.entity_id):
-			continue
-
-		var new_entity = spawnable_prefabs[request.target_prefab_id].instantiate()
-		if new_entity == null:
-			push_error("Failed to instantiate prefab %d for entity %d." % [request.target_prefab_id, request.entity_id])
-			return
-		new_entity.name = str(request.entity_id)
-		new_entity.entity_id = request.entity_id
-		new_entity.owner_peerid = request.owner_peer_id
-		new_entity.apply_entitystate(request.entity_state)
-		add_child(new_entity, true)
-		entityid_to_controllable_map[request.entity_id] = new_entity
+	var new_entity = spawnable_prefabs[request.target_prefab_id].instantiate()
+	if new_entity == null:
+		push_error("Failed to instantiate prefab %d for entity %d." % [request.target_prefab_id, request.entity_id])
+		return
+	new_entity.name = str(request.entity_id)
+	new_entity.entity_id = request.entity_id
+	new_entity.owner_peerid = request.owner_peer_id
+	new_entity.apply_entitystate(request.entity_state)
+	add_child(new_entity, true)
+	entityid_to_controllable_map[request.entity_id] = new_entity
 
 func accept_enemy_despawn_requests(buf: StreamPeerBuffer) -> void:
 	if buf.get_available_bytes() < 1:

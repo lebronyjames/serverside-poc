@@ -21,6 +21,7 @@ NetworkManager="*uid://8org6r154nnn"
 InfoPinger="*uid://dvxd413o4e77v"
 ClientLoop="*uid://dkisimsto8xb3"
 ServerLoop="*uid://bhm840p1ly72u"
+EntityStateConstructors="*uid://cest1f132p6vs"
 
 [physics]
 

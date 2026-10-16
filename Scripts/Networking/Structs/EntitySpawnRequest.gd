@@ -2,20 +2,20 @@ class_name EntitySpawnRequest
 extends Resource
 
 var entity_id: int
-var target_prefab_id: int
-var owner_peer_id: int
+var target_prefab_id: PrefabIdMap.Archetype
+var owner_peerid: int
 var entity_state: EntityState
 
 
 func _init(
 	_entity_id: int,
-	_target_prefab_id: int,
-	_owner_peer_id: int,
+	_target_prefab_id: PrefabIdMap.Archetype,
+	_owner_peerid: int,
 	_entity_state: EntityState
 ) -> void:
 	entity_id = _entity_id
 	target_prefab_id = _target_prefab_id
-	owner_peer_id = _owner_peer_id
+	owner_peerid = _owner_peerid
 	entity_state = _entity_state
 
 
@@ -32,7 +32,7 @@ func serialize() -> PackedByteArray:
 	var buffer := StreamPeerBuffer.new()
 	buffer.put_32(entity_id)
 	buffer.put_32(target_prefab_id)
-	buffer.put_32(owner_peer_id)
+	buffer.put_32(owner_peerid)
 	buffer.put_data(entity_state_data)
 	return buffer.data_array
 
@@ -57,7 +57,7 @@ static func deserialize_from_buffer(buffer: StreamPeerBuffer) -> EntitySpawnRequ
 
 	var entity_id := buffer.get_32()
 	var target_prefab_id := buffer.get_32()
-	var owner_peer_id := buffer.get_32()
+	var owner_peerid := buffer.get_32()
 	var entity_state := EntityState.deserialize_from_buffer(buffer)
 	if entity_state == null:
 		return null
@@ -65,6 +65,6 @@ static func deserialize_from_buffer(buffer: StreamPeerBuffer) -> EntitySpawnRequ
 	return EntitySpawnRequest.new(
 		entity_id,
 		target_prefab_id,
-		owner_peer_id,
+		owner_peerid,
 		entity_state
 	)
