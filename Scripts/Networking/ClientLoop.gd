@@ -79,7 +79,7 @@ func push_events_to_server():
 	var encoded_tick_events = InputLog.encode_tick(current_tick, peer_id, current_tick_inputs)
 	current_tick_event_packet.put_data(encoded_tick_events)
 	var sm := multiplayer as SceneMultiplayer
-	sm.send_bytes(current_tick_event_packet.data_array, 1, MultiplayerPeer.TRANSFER_MODE_UNRELIABLE, 1)  # to peer 1, channel 1
+	send_reliable_packet_to_server(current_tick_event_packet)
 
 func process_events_locally(delta):
 	var current_tick_inputs = input_log.get_inputs_for_tick(current_tick)
@@ -176,3 +176,13 @@ func accept_enemy_despawn_requests(buf: StreamPeerBuffer) -> void:
 		owned_entities.erase(entity_id)
 		if is_instance_valid(entity):
 			entity.queue_free()
+			
+# ------------------------------ Network helpers -----------------------------------------------
+
+func send_unreliable_packet_to_server(buffer: StreamPeerBuffer):
+	var sm := multiplayer as SceneMultiplayer
+	sm.send_bytes(buffer.data_array, 1, MultiplayerPeer.TRANSFER_MODE_UNRELIABLE, 1)  # to client peers, channel 1
+	
+func send_reliable_packet_to_server(buffer: StreamPeerBuffer):
+	var sm := multiplayer as SceneMultiplayer
+	sm.send_bytes(buffer.data_array, 1, MultiplayerPeer.TRANSFER_MODE_RELIABLE, 1)  # to client peers, channel 1
