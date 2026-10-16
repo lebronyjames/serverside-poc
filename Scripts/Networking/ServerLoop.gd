@@ -57,8 +57,7 @@ func serialize_and_export_entity_states():
 	var serialized_entity_state_pba = entity_state_list.serialize()
 	server_state_buffer_packet.put_data(serialized_entity_state_pba)
 	for client_peerid in clientids:
-		#send_reliable_packet_to_client(client_peerid, server_state_buffer_packet)
-		pass
+		send_reliable_packet_to_client(client_peerid, server_state_buffer_packet)
 	
 # -------------------------- Callbacks -----------------------------------------------------------
 	

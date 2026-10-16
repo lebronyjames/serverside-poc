@@ -39,16 +39,10 @@ func _physics_process(delta: float) -> void:
 	process_physics_locally(delta)
 	current_tick += 1
 
-func handle_entity_spawn_requests():
-	pass
-
-func handle_entity_despawn_requests():
-	pass
-
 func apply_server_state():
 	if entity_states.number_of_entities == 0:
 		return
-	
+		
 	var rtt_ticks = ceil(float(current_rtt) * Engine.physics_ticks_per_second / 1000.0)
 	current_tick = max(entity_states.current_tick + rtt_ticks * 2, current_tick) # we fast forward this if the client is very behind
 	for entity_state in entity_states.entities:
