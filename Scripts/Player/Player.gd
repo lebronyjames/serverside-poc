@@ -25,6 +25,29 @@ var latest_velocity: Vector3
 func _ready() -> void:
 	pass
 	
+func _unhandled_input(event: InputEvent) -> void: # capture mouse inputs
+	if multiplayer.get_unique_id() != owner_peerid:
+		return
+	
+	if event is InputEventMouseMotion:
+		var vec2_input = event.relative
+		var mouse_input = TimestampedInput.new(InputName.MOUSELOOK, owner_peerid, entity_id, ClientLoop.current_tick)
+		mouse_input.vec2 = vec2_input
+		ClientLoop.add_input_to_tick(mouse_input)
+	
+func capture_keyboard_inputs(delta: float, current_tick: int):
+	if multiplayer.get_unique_id() != owner_peerid:
+		return
+		
+	if Input.is_action_just_pressed("jump"):
+		var jump_input = TimestampedInput.new(InputName.JUMP, owner_peerid, entity_id, current_tick)
+		ClientLoop.add_input_to_tick(jump_input)
+
+	var input_dir := Input.get_vector("left", "right", "forward", "backward")
+	var movement_input = TimestampedInput.new(InputName.WALK, owner_peerid, entity_id, current_tick)
+	movement_input.vec2 = input_dir
+	ClientLoop.add_input_to_tick(movement_input)
+	
 func start_object():
 	if multiplayer.get_unique_id() == owner_peerid:
 		camera.current = true

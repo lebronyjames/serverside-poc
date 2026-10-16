@@ -34,6 +34,7 @@ func _physics_process(delta: float) -> void:
 		return
 
 	apply_server_state()
+	capture_keyboard_inputs(delta)
 	push_events_to_server()
 	process_events_locally(delta)
 	process_physics_locally(delta)
@@ -65,6 +66,10 @@ func apply_server_state():
 			
 	entity_states.clear()
 
+func capture_keyboard_inputs(delta: float):
+	for entityid in owned_entities:
+		entityid_to_controllable_map[entityid].capture_keyboard_inputs(delta, current_tick)
+
 func push_events_to_server():
 	var current_tick_event_packet := StreamPeerBuffer.new()
 	current_tick_event_packet.put_u8(PacketType.PacketType.INPUT_BATCH)
@@ -93,6 +98,9 @@ func send_client_init():
 	var packet := StreamPeerBuffer.new()
 	packet.put_u8(PacketType.PacketType.CLIENT_INIT)
 	send_reliable_packet_to_server(packet)
+
+func add_input_to_tick(input: TimestampedInput):
+	input_log.add_input_to_tick(input.tick, input)
 
 func on_server_to_client_packet(sender_id: int, packet: PackedByteArray) -> void: # helper wired in to receive packet
 	if sender_id != 1:

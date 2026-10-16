@@ -31,7 +31,7 @@ func _physics_process(delta: float) -> void:
 	if started == false:
 		return
 		
-	if current_tick % 6 == 0:
+	if current_tick % 3 == 0:
 		perform_input_actions_locally()
 		input_log.set_last_confirmed_tick(current_tick+1)
 		serialize_and_export_entity_states()
@@ -42,7 +42,7 @@ func perform_input_actions_locally():
 	for i in range(latest_cycle_tick, current_tick+1):
 		var current_tick_inputs = input_log.get_inputs_for_tick(i)
 		for input in current_tick_inputs:
-			entityid_to_controllable_map[input.peer_id].handle_timestamped_input(input)
+			entityid_to_controllable_map[input.entity_id].handle_timestamped_input(input)
 			
 		for entity_id in entityid_to_controllable_map:
 			entityid_to_controllable_map[entity_id].process_physics(1.0 / Engine.physics_ticks_per_second)
@@ -97,6 +97,8 @@ func spawn_entity(entity_id: int, owner_peerid: int, archetype: Archetype, start
 	get_tree().root.add_child(entity)
 	if (starting_entitystate != null):
 		entity.apply_entitystate(starting_entitystate)
+	entity.entity_id = entity_id
+	entity.owner_peerid = owner_peerid
 	var entity_state = entity.pack_to_entitystate()
 	var entity_spawn_request = EntitySpawnRequest.new(entity_id, Archetype.PLAYER, owner_peerid, entity_state)
 	entityid_to_controllable_map[entity_id] = entity

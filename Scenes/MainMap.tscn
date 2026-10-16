@@ -31,8 +31,8 @@ environment = SubResource("Environment_q7xqk")
 shape = SubResource("WorldBoundaryShape3D_hsp7m")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D" unique_id=649074389]
-transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0)
+transform = Transform3D(50, 0, 0, 0, 50, 0, 0, 0, 50, 0, 0, 0)
 mesh = SubResource("PlaneMesh_e7g1p")
 
 [node name="SpecCamera1" type="Camera3D" parent="." unique_id=891650761]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5674957, 5.2668853)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 12.875335, 37.785908)
