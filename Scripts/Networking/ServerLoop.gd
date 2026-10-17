@@ -1,5 +1,6 @@
 extends Node
 
+const SERVER_UPDATE_PER_PACKETS = 3
 const Archetype = PrefabIdMap.Archetype
 
 var started: bool = false
@@ -33,7 +34,7 @@ func _physics_process(_delta: float) -> void:
 	if started == false:
 		return
 		
-	if current_tick % 3 == 0:
+	if current_tick % SERVER_UPDATE_PER_PACKETS == 0:
 		perform_input_actions_locally()
 		input_log.set_last_confirmed_tick(current_tick+1)
 		serialize_and_export_entity_states()

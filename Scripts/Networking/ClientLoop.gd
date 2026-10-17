@@ -40,6 +40,7 @@ func _physics_process(delta: float) -> void:
 	push_events_to_server()
 	process_events_locally(lockstep_timing)
 	process_physics_locally(lockstep_timing)
+	interpolate_state(lockstep_timing)
 	current_tick += 1
 
 func apply_server_state():
@@ -54,11 +55,15 @@ func apply_server_state():
 		var entity_id = entity_state.entity_id
 		if entity_id not in entityid_to_controllable_map:
 			continue
-		entityid_to_controllable_map[entity_id].apply_entitystate(entity_state)
+			
+		if entity_id in owned_entities: # Only to owned entities
+			entityid_to_controllable_map[entity_id].apply_entitystate(entity_state)
+		else:
+			entityid_to_controllable_map[entity_id].cache_entitystate(entity_state, current_tick)
 	
 	input_log.set_last_confirmed_tick(entity_states.current_tick+1)
 	
-	# now apply local events later the confirmed window to keep the player relatively smooth
+	# now apply local events later the confirmed window to keep self-owned entities relatively smooth
 	# current_tick itself is excluded: it gets captured and simulated after this in _physics_process
 	for tick in range(entity_states.current_tick+1, current_tick):
 		var inputs = input_log.get_inputs_for_tick(tick)
@@ -66,8 +71,9 @@ func apply_server_state():
 			var target_entity_id = input.entity_id
 			entityid_to_controllable_map[target_entity_id].handle_timestamped_input(input)
 			
-		for entityid in entityid_to_controllable_map: # apply physics process to all entities per tick
-			entityid_to_controllable_map[entityid].process_physics(lockstep_timing)
+		for entityid in entityid_to_controllable_map: # Process physics only for owned entities
+			if entityid in owned_entities:
+				entityid_to_controllable_map[entityid].process_physics(lockstep_timing)
 			
 	entity_states.clear()
 
@@ -92,7 +98,6 @@ func push_events_to_server():
 		return
 	var encoded_tick_events = InputLog.encode_tick(current_tick, peer_id, current_tick_inputs)
 	current_tick_event_packet.put_data(encoded_tick_events)
-	var sm := multiplayer as SceneMultiplayer
 	send_reliable_packet_to_server(current_tick_event_packet)
 
 func process_events_locally(delta):
@@ -105,6 +110,12 @@ func process_events_locally(delta):
 func process_physics_locally(delta):
 	for entityid in owned_entities:
 		entityid_to_controllable_map[entityid].process_physics(delta)
+
+func interpolate_state(delta):
+	for entityid in entityid_to_controllable_map:
+		var entity = entityid_to_controllable_map[entityid]
+		if entity.owner_peerid != multiplayer.get_unique_id():
+			entity.process_interpolation(delta)
 
 # --------------------------- callbacks ----------------------------------------
 
@@ -170,7 +181,8 @@ func accept_entity_spawn_requests(buf: StreamPeerBuffer) -> void:
 	new_entity.start_object()
 	
 	entityid_to_controllable_map[request.entity_id] = new_entity
-	owned_entities.append(request.entity_id)
+	if request.owner_peerid == multiplayer.get_unique_id():
+		owned_entities.append(request.entity_id)
 
 func accept_enemy_despawn_requests(buf: StreamPeerBuffer) -> void:
 	if buf.get_available_bytes() < 1:

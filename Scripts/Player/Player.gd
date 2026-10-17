@@ -11,9 +11,11 @@ enum Mode { Server, Client, RemoteClient }
 @export var JUMP_VELOCITY = 4.5
 @export var sensitivity: float = 0.002
 
-
 @export var head: Node3D
 @export var camera: Camera3D
+
+var next_target_state: EntityState
+var last_confirmed_tick: int
 
 var entity_id: int
 var owner_peerid: int
@@ -74,6 +76,23 @@ func process_physics(delta: float) -> void:
 	move_and_slide()
 	grounded = is_on_floor()
 
+func process_interpolation(delta: float) -> void:
+	if next_target_state == null:
+		return
+		
+	if ClientLoop.current_tick - last_confirmed_tick > ServerLoop.SERVER_UPDATE_PER_PACKETS:
+		apply_entitystate(next_target_state)
+	
+	var lerp_weight = 1.0 / ServerLoop.SERVER_UPDATE_PER_PACKETS
+	
+	var target_position = next_target_state.vec3_values[0]
+	var target_rotation = next_target_state.vec3_values[1]
+	var target_head_rotation = next_target_state.vec3_values[2]
+	
+	global_position = global_position.lerp(target_position, lerp_weight)
+	global_rotation = global_rotation.lerp(target_rotation, lerp_weight)
+	head.global_rotation = head.global_rotation.lerp(target_head_rotation, lerp_weight)
+	
 func handle_timestamped_input(input: TimestampedInput):
 	if input.peer_id != owner_peerid and input.peer_id != 1: # reject input from packet that is not from server or owner
 		return
@@ -104,10 +123,14 @@ func pack_to_entitystate():
 
 	return new_entitystate
 
-func apply_entitystate(entity_state: EntityState):
+func apply_entitystate(entity_state: EntityState): # Apply to snap entity into state
 	global_position = entity_state.vec3_values[0]
 	global_rotation = entity_state.vec3_values[1]
 	head.global_rotation = entity_state.vec3_values[2]
 	velocity = entity_state.vec3_values[3]
 	latest_velocity = entity_state.vec3_values[4]
 	grounded = entity_state.bool_values[0]
+
+func cache_entitystate(entity_state: EntityState, confirmed_tick: int): # cache entity state
+	next_target_state = entity_state
+	last_confirmed_tick = confirmed_tick

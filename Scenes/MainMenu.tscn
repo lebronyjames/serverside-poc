@@ -42,7 +42,7 @@ layout_mode = 2
 
 [node name="Label" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=161393307]
 layout_mode = 2
-text = "LETS GOOOOO THE GAME"
+text = "MP Demo game"
 
 [node name="Username" type="LineEdit" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=907219227]
 layout_mode = 2
