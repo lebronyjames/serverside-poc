@@ -50,13 +50,13 @@ static func encode_tick(tick: int, peer_id: int, inputs: Array) -> PackedByteArr
 	for input: TimestampedInput in inputs:
 		buf.put_u8(input.input_name)   # enum as u8
 		buf.put_u32(input.entity_id)
-		buf.put_half(input.vec2.x)
-		buf.put_half(input.vec2.y)
-		buf.put_half(input.vec3.x)
-		buf.put_half(input.vec3.y)
-		buf.put_half(input.vec3.z)
+		buf.put_float(input.vec2.x)
+		buf.put_float(input.vec2.y)
+		buf.put_float(input.vec3.x)
+		buf.put_float(input.vec3.y)
+		buf.put_float(input.vec3.z)
 		buf.put_u8(1 if input.bool_ else 0)
-		buf.put_half(input.float_)
+		buf.put_float(input.float_)
 
 	return buf.data_array
 
@@ -73,10 +73,10 @@ static func decode_tick(data: PackedByteArray) -> Dictionary:
 		var input_name: InputName = buf.get_u8()
 		var entity_id: int = buf.get_u32()
 		var input := TimestampedInput.new(input_name, peer_id, entity_id, tick)
-		input.vec2 = Vector2(buf.get_half(), buf.get_half())
-		input.vec3 = Vector3(buf.get_half(), buf.get_half(), buf.get_half())
+		input.vec2 = Vector2(buf.get_float(), buf.get_float())
+		input.vec3 = Vector3(buf.get_float(), buf.get_float(), buf.get_float())
 		input.bool_ = buf.get_u8() == 1
-		input.float_ = buf.get_half()
+		input.float_ = buf.get_float()
 		inputs.append(input)
 
 	return { "tick": tick, "peer_id": peer_id, "inputs": inputs }

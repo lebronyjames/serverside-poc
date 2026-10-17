@@ -1,5 +1,7 @@
 extends Node
 
+const INPUT_BUFFER_TICKS = 3 # extra lead over rtt to absorb jitter
+
 var spawnable_prefabs: Dictionary[int, PackedScene] = {}
 var lockstep_timing: float
 
@@ -43,9 +45,11 @@ func _physics_process(delta: float) -> void:
 func apply_server_state():
 	if entity_states.number_of_entities == 0:
 		return
-		
+
+	update_rtt()
 	var rtt_ticks = ceil(float(current_rtt) * Engine.physics_ticks_per_second / 1000.0)
-	current_tick = max(entity_states.current_tick + rtt_ticks * 2, current_tick) # we fast forward this if the client is very behind
+	# inputs for current_tick must reach the server before it simulates that tick, so stay at least rtt + buffer ahead
+	current_tick = max(entity_states.current_tick + rtt_ticks + INPUT_BUFFER_TICKS, current_tick) # we fast forward this if the client is very behind
 	for entity_state in entity_states.entities:
 		var entity_id = entity_state.entity_id
 		if entity_id not in entityid_to_controllable_map:
@@ -55,7 +59,8 @@ func apply_server_state():
 	input_log.set_last_confirmed_tick(entity_states.current_tick+1)
 	
 	# now apply local events later the confirmed window to keep the player relatively smooth
-	for tick in range(entity_states.current_tick+1, current_tick+1):
+	# current_tick itself is excluded: it gets captured and simulated after this in _physics_process
+	for tick in range(entity_states.current_tick+1, current_tick):
 		var inputs = input_log.get_inputs_for_tick(tick)
 		for input in inputs:
 			var target_entity_id = input.entity_id
@@ -65,6 +70,15 @@ func apply_server_state():
 			entityid_to_controllable_map[entityid].process_physics(lockstep_timing)
 			
 	entity_states.clear()
+
+func update_rtt():
+	var enet := multiplayer.multiplayer_peer as ENetMultiplayerPeer
+	if enet == null:
+		return
+	var server_peer := enet.get_peer(1)
+	if server_peer == null:
+		return
+	current_rtt = int(server_peer.get_statistic(ENetPacketPeer.PEER_ROUND_TRIP_TIME))
 
 func capture_keyboard_inputs(delta: float):
 	for entityid in owned_entities:

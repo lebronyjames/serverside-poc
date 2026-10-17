@@ -75,6 +75,8 @@ func on_client_to_server_packet(sender_id: int, packet: PackedByteArray) -> void
 		var decoded_input_packet := InputLog.decode_tick(buf.data_array.slice(1))
 		decoded_input_packet["peer_id"] = sender_id
 		var packet_tick = decoded_input_packet.tick
+		if packet_tick < input_log.last_confirmed_tick: # late input: apply on the next unsimulated tick instead of dropping it
+			packet_tick = input_log.last_confirmed_tick
 		for input in decoded_input_packet.inputs:
 			input_log.add_input_to_tick(packet_tick, input)
 	elif packet_type == PacketType.PacketType.CLIENT_INIT:

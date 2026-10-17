@@ -20,10 +20,14 @@ var owner_peerid: int
 
 var latest_input_dir: Vector2
 var latest_velocity: Vector3
+var grounded: bool # synced floor state, is_on_floor() is not reliable right after a snapshot teleport
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	pass
+	# floor snapping depends on CharacterBody3D's internal on_floor from the previous move_and_slide,
+	# which isn't networked and is stale after a snapshot rewind. Without it, floor detection only
+	# depends on position and velocity, so client replays match the server.
+	floor_snap_length = 0.0
 	
 func _unhandled_input(event: InputEvent) -> void: # capture mouse inputs
 	if multiplayer.get_unique_id() != owner_peerid:
@@ -60,14 +64,15 @@ func start_object():
 	latest_velocity = Vector3.ZERO
 
 func process_physics(delta: float) -> void:
-	if not is_on_floor():
-		velocity += get_gravity() * delta
-	
+	# always apply gravity so move_and_slide finds the floor by contact every tick (velocity.y is zeroed on landing)
+	velocity += get_gravity() * delta
+
 	# deceleration is needed
 	velocity.x = move_toward(velocity.x, latest_velocity.x, 5)
 	velocity.z = move_toward(velocity.z, latest_velocity.z, 5)
-		
+
 	move_and_slide()
+	grounded = is_on_floor()
 
 func handle_timestamped_input(input: TimestampedInput):
 	if input.peer_id != owner_peerid and input.peer_id != 1: # reject input from packet that is not from server or owner
@@ -76,8 +81,8 @@ func handle_timestamped_input(input: TimestampedInput):
 	var input_name = input.input_name
 	var vec2 = input.vec2
 	
-	if input_name == InputName.JUMP and is_on_floor():
-		velocity.y += JUMP_VELOCITY
+	if input_name == InputName.JUMP and grounded:
+		velocity.y = JUMP_VELOCITY
 		
 	if input_name == InputName.MOUSELOOK:
 		rotate_y(-vec2.x * sensitivity)
@@ -94,7 +99,9 @@ func pack_to_entitystate():
 	new_entitystate.set_vec3(global_rotation)
 	new_entitystate.set_vec3(head.global_rotation)
 	new_entitystate.set_vec3(velocity)
-	
+	new_entitystate.set_vec3(latest_velocity)
+	new_entitystate.set_bool(grounded)
+
 	return new_entitystate
 
 func apply_entitystate(entity_state: EntityState):
@@ -102,4 +109,5 @@ func apply_entitystate(entity_state: EntityState):
 	global_rotation = entity_state.vec3_values[1]
 	head.global_rotation = entity_state.vec3_values[2]
 	velocity = entity_state.vec3_values[3]
-	move_and_slide()
+	latest_velocity = entity_state.vec3_values[4]
+	grounded = entity_state.bool_values[0]
