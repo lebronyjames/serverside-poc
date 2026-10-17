@@ -34,10 +34,10 @@ func _physics_process(delta: float) -> void:
 		return
 
 	apply_server_state()
-	capture_keyboard_inputs(delta)
+	capture_keyboard_inputs(lockstep_timing)
 	push_events_to_server()
-	process_events_locally(delta)
-	process_physics_locally(delta)
+	process_events_locally(lockstep_timing)
+	process_physics_locally(lockstep_timing)
 	current_tick += 1
 
 func apply_server_state():

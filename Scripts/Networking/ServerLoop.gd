@@ -9,6 +9,7 @@ var clientids: Array[int]
 var entityid_to_controllable_map := {} # tracking possession of controllable object by entity id
 var entity_states: EntityStateList
 var input_log: InputLog
+var lockstep: float
 
 var entity_spawn_requests: Array[EntitySpawnRequest]
 var entity_despawn_requests: Array[EntityDespawnRequest]
@@ -20,6 +21,7 @@ func start() -> void:
 	clientids = []
 	entity_states = EntityStateList.new(current_tick)
 	input_log = InputLog.new()
+	lockstep = 1.0 / Engine.physics_ticks_per_second
 	entity_spawn_requests = []
 	entity_despawn_requests = []
 	multiplayer.peer_packet.connect(on_client_to_server_packet)
@@ -27,7 +29,7 @@ func start() -> void:
 # --------------------------------- Server loop --------------------------------------------
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
-func _physics_process(delta: float) -> void:
+func _physics_process(_delta: float) -> void:
 	if started == false:
 		return
 		
@@ -45,7 +47,7 @@ func perform_input_actions_locally():
 			entityid_to_controllable_map[input.entity_id].handle_timestamped_input(input)
 			
 		for entity_id in entityid_to_controllable_map:
-			entityid_to_controllable_map[entity_id].process_physics(1.0 / Engine.physics_ticks_per_second)
+			entityid_to_controllable_map[entity_id].process_physics(lockstep)
 	
 func serialize_and_export_entity_states():
 	var entity_state_list = EntityStateList.new(current_tick)
